@@ -5,7 +5,7 @@ from psycopg2.extras import RealDictCursor
 from .config import settings
 from fastapi.middleware.cors import CORSMiddleware
 
-origins = ['http://localhost']
+origins = ['http://localhost:3000']
 
 app = FastAPI()
 
@@ -18,22 +18,28 @@ app.add_middleware(
 )
 try: 
     conn = psycopg2.connect(host=settings.database_hostname, database=settings.database_name, user=settings.database_username, password=settings.database_password, cursor_factory=RealDictCursor)
-    cursor = conn.cursor()
+    cur = conn.cursor()
     print("database connection successful")
 
 except Exception as error: 
     print("connection to database failed")
     print("Error", error)
 
-
-
 class Project(BaseModel):
     title: str
     description: str
-    open_positions: list
-    link_to_repo: str
+    openPositions: list
+    linkToRepo: str
+
+@app.get("/projects")
+async def getAllProjects():
+    cur.execute(""" SELECT * FROM projects """)
+    projects = cur.fetchall()
+    print(projects)
+    return {'data': projects}
 
 @app.post("/projects")
-async def getAll(project: Project):
+async def addProject(project):
+    print('project data', project)
     
     return {"project": project}
