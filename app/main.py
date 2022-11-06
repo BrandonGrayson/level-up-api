@@ -25,11 +25,11 @@ except Exception as error:
     print("connection to database failed")
     print("Error", error)
 
-class Project(BaseModel):
+class NewProject(BaseModel):
     title: str
     description: str
-    openPositions: list
-    linkToRepo: str
+    open_positions: list
+    link_to_repo: str
 
 @app.get("/projects")
 async def getAllProjects():
@@ -39,7 +39,9 @@ async def getAllProjects():
     return {'data': projects}
 
 @app.post("/projects")
-async def addProject(project):
-    print('project data', project)
-    
-    return {"project": project}
+async def addProject(new_project: NewProject):
+    print(new_project)
+    cur.execute(""" INSERT INTO projects (title, description, open_positions, link_to_repo) VALUES (%s, %s, %s, %s) RETURNING * """, (new_project.title, new_project.description, new_project.open_positions, new_project.link_to_repo)) 
+    project_details = cur.fetchone()
+    conn.commit()
+    return {"new_project": project_details}
