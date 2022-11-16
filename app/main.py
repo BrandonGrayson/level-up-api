@@ -46,7 +46,7 @@ async def addProject(new_project: NewProject):
     conn.commit()
     return {"new_project": project_details}
 
-@app.post("/users", status_code=status.HTTP_201_CREATED)
+@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
 async def newUser(user: schemas.UserCreate):
     cur.execute(""" INSERT INTO users (email, password) VALUES (%s, %s) RETURNING * """, (user.email, user.password))
     user_details = cur.fetchone()
