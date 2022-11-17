@@ -1,12 +1,13 @@
 from fastapi import FastAPI, status
-from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from .config import settings
 from fastapi.middleware.cors import CORSMiddleware
-from . import schemas
+from . import schemas, utils
 
 origins = ['http://localhost:3000']
+
+
 
 app = FastAPI()
 
@@ -27,12 +28,6 @@ except Exception as error:
     print("connection to database failed")
     print("Error", error)
 
-class NewProject(BaseModel):
-    title: str
-    description: str
-    open_positions: list
-    link_to_repo: str
-
 @app.get("/projects")
 async def getAllProjects():
     cur.execute(""" SELECT * FROM projects """)
@@ -40,7 +35,7 @@ async def getAllProjects():
     return {'data': projects}
 
 @app.post("/projects")
-async def addProject(new_project: NewProject):
+async def addProject(new_project: schemas.NewProject):
     cur.execute(""" INSERT INTO projects (title, description, open_positions, link_to_repo) VALUES (%s, %s, %s, %s) RETURNING * """, (new_project.title, new_project.description, new_project.open_positions, new_project.link_to_repo)) 
     project_details = cur.fetchone()
     conn.commit()
@@ -48,9 +43,13 @@ async def addProject(new_project: NewProject):
 
 @app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
 async def newUser(user: schemas.UserCreate):
+
+    hashed_password = utils.hashPassword(user.password)
+    user.password = hashed_password
+
     cur.execute(""" INSERT INTO users (email, password) VALUES (%s, %s) RETURNING * """, (user.email, user.password))
     user_details = cur.fetchone()
     conn.commit()
 
-    return user_details
+    return user_details 
     
