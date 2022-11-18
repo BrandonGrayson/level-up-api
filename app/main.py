@@ -1,4 +1,4 @@
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, HTTPException
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from .config import settings
@@ -52,4 +52,16 @@ async def newUser(user: schemas.UserCreate):
     conn.commit()
 
     return user_details 
+
+@app.get("/users/{id}")
+async def getUser(id: int):
+    cur.execute(""" SELECT * FROM users WHERE id = %s """, (str(id),))
+
+    project = cur.fetchone()
+    
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"user with id: {id} does not exist")
+    
+    return project
+
     
