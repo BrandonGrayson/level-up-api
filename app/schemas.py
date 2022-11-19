@@ -1,5 +1,6 @@
 from pydantic import EmailStr
 from pydantic import BaseModel
+from datetime import datetime
 
 class NewProject(BaseModel):
     title: str
@@ -14,3 +15,4 @@ class UserCreate(BaseModel):
 class UserOut(BaseModel):
     id: int
     email: EmailStr
+    created_at: datetime

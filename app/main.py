@@ -7,8 +7,6 @@ from . import schemas, utils
 
 origins = ['http://localhost:3000']
 
-
-
 app = FastAPI()
 
 app.add_middleware(
@@ -53,8 +51,8 @@ async def newUser(user: schemas.UserCreate):
 
     return user_details 
 
-@app.get("/users/{id}")
-async def getUser(id: int):
+@app.get("/users/{id}", response_model=schemas.UserOut)
+async def getUser(id: int, ):
     cur.execute(""" SELECT * FROM users WHERE id = %s """, (str(id),))
 
     project = cur.fetchone()
