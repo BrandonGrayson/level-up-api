@@ -3,7 +3,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from .config import settings
 from fastapi.middleware.cors import CORSMiddleware
-from . import schemas, utils
+from . import schemas, utils, oauth2
 
 origins = ['http://localhost:3000']
 
@@ -71,13 +71,10 @@ async def getUser(id: int, ):
 
 @app.get("/login")
 async def login(user_credentials: schemas.userLogin):
-    print('user creds', user_credentials)
 
     cur.execute(""" SELECT * FROM users WHERE email = (%s) """, (user_credentials.email,))
 
     user = cur.fetchone()
-
-    print('user', user)
 
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Invalid Credentials")
@@ -85,7 +82,9 @@ async def login(user_credentials: schemas.userLogin):
     if not utils.verifyPassword(user_credentials.password, user['password']):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Invalid Credentials")
 
-    return {"token": "Example Token"}
+    access_token = oauth2.create_access_token(data={"user_id": user['id']})
+
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
     
