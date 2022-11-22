@@ -1,4 +1,4 @@
-from fastapi import FastAPI, status, HTTPException
+from fastapi import FastAPI, HTTPException, status
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from .config import settings
@@ -26,6 +26,11 @@ except Exception as error:
     print("connection to database failed")
     print("Error", error)
 
+
+@app.get("/")
+async def root():
+    return {"message": "Hello Bigger Applications!"}
+
 @app.get("/projects")
 async def getAllProjects():
     cur.execute(""" SELECT * FROM projects """)
@@ -38,6 +43,8 @@ async def addProject(new_project: schemas.NewProject):
     project_details = cur.fetchone()
     conn.commit()
     return {"new_project": project_details}
+
+
 
 @app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
 async def newUser(user: schemas.UserCreate):
@@ -61,5 +68,24 @@ async def getUser(id: int, ):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"user with id: {id} does not exist")
     
     return project
+
+@app.get("/login")
+async def login(user_credentials: schemas.userLogin):
+    print('user creds', user_credentials)
+
+    cur.execute(""" SELECT * FROM users WHERE email = (%s) """, (user_credentials.email,))
+
+    user = cur.fetchone()
+
+    print('user', user)
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Invalid Credentials")
+
+    if not utils.verifyPassword(user_credentials.password, user['password']):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Invalid Credentials")
+
+    return {"token": "Example Token"}
+
 
     
