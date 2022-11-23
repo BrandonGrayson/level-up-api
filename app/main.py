@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Depends
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from .config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from . import schemas, utils, oauth2
+from fastapi.security import OAuth2PasswordRequestForm
 
 origins = ['http://localhost:3000']
 
@@ -70,9 +71,9 @@ async def getUser(id: int, ):
     return project
 
 @app.get("/login")
-async def login(user_credentials: schemas.userLogin):
+async def login(user_credentials: OAuth2PasswordRequestForm = Depends()):
 
-    cur.execute(""" SELECT * FROM users WHERE email = (%s) """, (user_credentials.email,))
+    cur.execute(""" SELECT * FROM users WHERE email = (%s) """, (user_credentials.username,))
 
     user = cur.fetchone()
 
