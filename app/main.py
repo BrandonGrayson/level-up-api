@@ -42,7 +42,8 @@ async def getAllProjects():
 
 
 @app.post("/projects")
-async def addProject(new_project: schemas.NewProject):
+def addProject(new_project: schemas.NewProject, user_id: int = Depends(oauth2.get_current_user)):
+    print(user_id)
     cur.execute(""" INSERT INTO projects (title, description, open_positions, link_to_repo) VALUES (%s, %s, %s, %s) RETURNING * """,
                 (new_project.title, new_project.description, new_project.open_positions, new_project.link_to_repo))
     project_details = cur.fetchone()
