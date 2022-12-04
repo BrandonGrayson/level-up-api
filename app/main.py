@@ -5,6 +5,7 @@ from .config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from . import schemas, utils, oauth2
 from fastapi.security import OAuth2PasswordRequestForm
+from typing import List
 
 origins = ['http://localhost:3000']
 
@@ -29,20 +30,16 @@ except Exception as error:
     print("Error", error)
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello Bigger Applications!"}
-
-
-@app.get("/projects")
-async def getAllProjects():
+@app.get("/projects", response_model=List[schemas.Project])
+async def getAllProjects(user_id: int = Depends(oauth2.get_current_user)):
     cur.execute(""" SELECT * FROM projects """)
     projects = cur.fetchall()
-    return {'data': projects}
+    # print(type(projects))
+    return projects
 
 
 @app.post("/projects")
-def addProject(new_project: schemas.NewProject, user_id: int = Depends(oauth2.get_current_user)):
+def addProject(new_project: schemas.ProjectBase, user_id: int = Depends(oauth2.get_current_user)):
     print(user_id)
     cur.execute(""" INSERT INTO projects (title, description, open_positions, link_to_repo) VALUES (%s, %s, %s, %s) RETURNING * """,
                 (new_project.title, new_project.description, new_project.open_positions, new_project.link_to_repo))
@@ -66,7 +63,7 @@ async def newUser(user: schemas.UserCreate):
 
 
 @app.get("/users/{id}", response_model=schemas.UserOut)
-async def getUser(id: int, ):
+async def getUser(id: int, user_id: int = Depends(oauth2.get_current_user)):
     cur.execute(""" SELECT * FROM users WHERE id = %s """, (str(id),))
 
     project = cur.fetchone()
@@ -78,7 +75,7 @@ async def getUser(id: int, ):
     return project
 
 
-@app.get("/login")
+@app.get("/login", response_model=schemas.Token)
 async def login(user_credentials: OAuth2PasswordRequestForm = Depends()):
 
     cur.execute(""" SELECT * FROM users WHERE email = (%s) """,
